@@ -1,0 +1,91 @@
+# Friends App API Testing
+# This file works with the REST Client VSCode extension
+# Install it from: https://marketplace.visualstudio.com/items?itemName=humao.rest-client
+
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+
+### Health Check
+GET {{baseUrl}}/health/
+Content-Type: {{contentType}}
+
+### List All Profiles
+GET {{baseUrl}}/profiles/
+Content-Type: {{contentType}}
+
+### Get Single Profile (replace with valid UUID after creating a profile)
+# @name getProfile
+GET {{baseUrl}}/profiles/8b776b29-79fe-4042-a6b7-301bed96f88f/
+Content-Type: {{contentType}}
+
+### Create New Profile
+# @name createProfile
+POST {{baseUrl}}/profiles/
+Content-Type: {{contentType}}
+
+{
+  "name": "John Doe",
+  "age": 28,
+  "gender": "M",
+  "bio": "Software engineer who loves hiking and photography.",
+  "location": "San Francisco, CA"
+}
+
+### Store the profile ID from the create response
+@profileId = {{createProfile.response.body.id}}
+
+### Get Created Profile
+GET {{baseUrl}}/profiles/{{profileId}}/
+Content-Type: {{contentType}}
+
+### Update Profile
+PATCH {{baseUrl}}/profiles/{{profileId}}/
+Content-Type: {{contentType}}
+
+{
+  "bio": "Software engineer who loves hiking, photography, and traveling."
+}
+
+### Delete Profile
+DELETE {{baseUrl}}/profiles/{{profileId}}/
+Content-Type: {{contentType}}
+
+### Create Profile with Image (Multipart Form)
+# Note: For file uploads, you need to use the VSCode REST Client's file upload syntax
+# The below example shows the structure, but actual file upload requires specifying a local file path
+POST {{baseUrl}}/profiles/
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="name"
+
+Jane Smith
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="age"
+
+25
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="gender"
+
+F
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="bio"
+
+Product designer with a passion for UX research.
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="location"
+
+New York, NY
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="profile_picture"; filename="profile.jpg"
+Content-Type: image/jpeg
+
+< ./path/to/your/image.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### Django Admin Login
+# You can use this to log in to the Django admin interface
+POST http://localhost:8000/admin/login/
+Content-Type: application/x-www-form-urlencoded
+
+username=admin&password=yourpassword

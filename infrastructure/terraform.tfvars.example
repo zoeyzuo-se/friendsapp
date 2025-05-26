@@ -1,0 +1,14 @@
+# Sample terraform.tfvars file - Replace these values with your own
+environment       = "dev"
+location          = "eastus"
+db_admin_username = "adminuser"
+db_admin_password = "ChangeMe123!"  # Replace with a secure password
+app_service_sku   = "B1"
+django_secret_key = "your-secure-django-secret-key-here"
+custom_domain     = ""  # Optional
+
+tags = {
+  Environment = "Development"
+  Project     = "FriendsApp"
+  Service     = "ProfileManagementService"
+}
