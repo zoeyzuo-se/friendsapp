@@ -1,3 +1,9 @@
+variable "subscription_id" {
+  description = "The Azure subscription ID"
+  type        = string
+  sensitive   = true
+}
+
 variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
   type        = string

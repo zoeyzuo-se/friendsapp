@@ -39,6 +39,7 @@ A Django-based backend API service for a Tinder-like app. This service is respon
 
 4. Run database migrations:
    ```
+   poetry run python manage.py makemigrations // Only for the first time
    poetry run python manage.py migrate
    ```
 

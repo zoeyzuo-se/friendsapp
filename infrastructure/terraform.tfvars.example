@@ -1,14 +1,16 @@
 # Sample terraform.tfvars file - Replace these values with your own
+subscription_id  = "00000000-0000-0000-0000-000000000000" # Your Azure subscription ID
 environment       = "dev"
-location          = "eastus"
+location          = "westeurope"  # Region where PostgreSQL Flexible Server is available
 db_admin_username = "adminuser"
-db_admin_password = "ChangeMe123!"  # Replace with a secure password
+db_admin_password = ""  # Replace with a secure password
 app_service_sku   = "B1"
-django_secret_key = "your-secure-django-secret-key-here"
+django_secret_key = ""
 custom_domain     = ""  # Optional
 
 tags = {
   Environment = "Development"
   Project     = "FriendsApp"
   Service     = "ProfileManagementService"
+  Owner       = "Zoey"
 }

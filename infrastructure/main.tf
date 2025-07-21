@@ -9,6 +9,7 @@ terraform {
 
 provider "azurerm" {
   features {}
+  subscription_id = var.subscription_id
 }
 
 # Random string for unique resource names
@@ -35,22 +36,25 @@ resource "azurerm_container_registry" "acr" {
   tags                = var.tags
 }
 
-# PostgreSQL Flexible Server
+# PostgreSQL Flexible Server (updated from Single Server)
 resource "azurerm_postgresql_flexible_server" "postgres" {
   name                   = "psql-friendsapp-${var.environment}-${random_string.resource_suffix.result}"
   resource_group_name    = azurerm_resource_group.rg.name
   location               = azurerm_resource_group.rg.location
-  version                = "14"
+  version                = "13"
   administrator_login    = var.db_admin_username
   administrator_password = var.db_admin_password
-  storage_mb             = 32768
-  sku_name               = "B_Standard_B1ms"
-  backup_retention_days  = 7
+  
+  storage_mb = 32768  # 30 GB
+  sku_name   = "GP_Standard_D2s_v3"  # Adjusted for Flexible Server SKU
+  
+  backup_retention_days     = 7
+  geo_redundant_backup_enabled = false
   
   tags = var.tags
 }
 
-# PostgreSQL Database
+# PostgreSQL Database for Flexible Server
 resource "azurerm_postgresql_flexible_server_database" "profiles_db" {
   name      = "friendsapp_profiles"
   server_id = azurerm_postgresql_flexible_server.postgres.id
@@ -58,7 +62,7 @@ resource "azurerm_postgresql_flexible_server_database" "profiles_db" {
   collation = "en_US.utf8"
 }
 
-# Allow Azure services to access PostgreSQL
+# Firewall rule for Flexible Server
 resource "azurerm_postgresql_flexible_server_firewall_rule" "allow_azure_services" {
   name             = "AllowAzureServices"
   server_id        = azurerm_postgresql_flexible_server.postgres.id
@@ -102,31 +106,53 @@ resource "azurerm_linux_web_app" "app_service" {
   location            = azurerm_resource_group.rg.location
   service_plan_id     = azurerm_service_plan.app_plan.id
   
+  logs {
+    application_logs {
+      file_system_level = "Information"
+    }
+    http_logs {
+      file_system {
+        retention_in_days = 7
+        retention_in_mb   = 35
+      }
+    }
+  }
+  
   site_config {
     application_stack {
-      docker_image     = "${azurerm_container_registry.acr.login_server}/friendsapp"
-      docker_image_tag = "latest"
+      docker_image_name = "${azurerm_container_registry.acr.login_server}/friendsapp:latest"
+      docker_registry_url = "https://${azurerm_container_registry.acr.login_server}"
+      docker_registry_username = azurerm_container_registry.acr.admin_username
+      docker_registry_password = azurerm_container_registry.acr.admin_password
     }
-    always_on = true
+    always_on                = true
+    ftps_state               = "Disabled"
+    health_check_path        = "/api/health/"
+    health_check_eviction_time_in_min = 5
+    container_registry_use_managed_identity = false
   }
   
   app_settings = {
     "WEBSITES_PORT"                     = "8000"
     "WEBSITES_ENABLE_APP_SERVICE_STORAGE" = "false"
-    "DOCKER_REGISTRY_SERVER_URL"        = "https://${azurerm_container_registry.acr.login_server}"
-    "DOCKER_REGISTRY_SERVER_USERNAME"   = azurerm_container_registry.acr.admin_username
-    "DOCKER_REGISTRY_SERVER_PASSWORD"   = azurerm_container_registry.acr.admin_password
     "DJANGO_SETTINGS_MODULE"            = "core.settings"
     "DEBUG"                             = "False"
-    "ALLOWED_HOSTS"                     = "${azurerm_linux_web_app.app_service.default_hostname},${var.custom_domain}"
-    "DATABASE_URL"                      = "postgres://${var.db_admin_username}:${var.db_admin_password}@${azurerm_postgresql_flexible_server.postgres.fqdn}:5432/${azurerm_postgresql_flexible_server_database.profiles_db.name}"
+    "ALLOWED_HOSTS"                     = "${var.custom_domain}"
+    "DATABASE_URL"                      = "postgres://${var.db_admin_username}:${urlencode(var.db_admin_password)}@${azurerm_postgresql_flexible_server.postgres.fqdn}:5432/${azurerm_postgresql_flexible_server_database.profiles_db.name}?sslmode=require"
     "AZURE_STORAGE_ACCOUNT_NAME"        = azurerm_storage_account.storage.name
     "AZURE_STORAGE_ACCOUNT_KEY"         = azurerm_storage_account.storage.primary_access_key
     "AZURE_STORAGE_CONTAINER"           = azurerm_storage_container.media.name
     "SECRET_KEY"                        = var.django_secret_key
+    "WORKERS"                           = "2"
+    "TIMEOUT"                           = "120"
   }
   
   tags = var.tags
+  depends_on = [
+    azurerm_postgresql_flexible_server.postgres,
+    azurerm_storage_account.storage,
+    azurerm_container_registry.acr
+  ]
 }
 
 # Output the App Service URL
