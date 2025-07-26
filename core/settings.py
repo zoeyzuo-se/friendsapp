@@ -31,7 +31,11 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "django-insecure-te7ox1i6&(-*=33(%%w5u
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*.railway.app").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1,*.railway.app,healthcheck.railway.app").split(",")
+
+# Add Railway's actual domain if RAILWAY_ENVIRONMENT exists
+if os.environ.get("RAILWAY_ENVIRONMENT"):
+    ALLOWED_HOSTS.append("wave-production-75d8.up.railway.app")
 
 
 # Application definition

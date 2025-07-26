@@ -1,7 +1,10 @@
 [build]
 builder = "nixpacks"
 
+[build.nixpacksConfig]
+providers = ["python"]
+
 [deploy]
-healthcheckPath = "/admin/"
+healthcheckPath = "/health/"
 healthcheckTimeout = 300
 restartPolicyType = "always"

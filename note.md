@@ -24,3 +24,13 @@ terraform:
 2. terraform plan
 3. terraform apply
 4. terraform output
+
+
+Railway:
+- brew install railway
+- railway login
+- railway init : init a new project
+- railway add : add database PostgreSQL
+- railway up
+- App URL: https://wave-production-75d8.up.railway.app
+- railway service: link service to the project
